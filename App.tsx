@@ -30,6 +30,65 @@ const defaultInputs: InvestmentInputs = {
   deductions: 5000
 };
 
+// Helper Input Component to handle manual entry better
+const SmartInputField = ({ 
+  label, 
+  value, 
+  onChange, 
+  min = 0, 
+  max, 
+  step = 1, 
+  prefix = "", 
+  suffix = "" 
+}: { 
+  label: string, 
+  value: number, 
+  onChange: (val: number) => void, 
+  min?: number, 
+  max?: number, 
+  step?: number, 
+  prefix?: string, 
+  suffix?: string 
+}) => {
+  // We don't use local state here to avoid complex sync, but we rely on the parent sending us the value.
+  // The trick for number inputs is not to use value={value || 0} which forces 0 on empty.
+  // Instead we handle the input change carefully.
+
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-slate-600 flex justify-between">
+        {label}
+        {/* Only show the current value indicator if we have a valid number */}
+        <span className="text-brand-600 font-semibold">{prefix}{isNaN(value) ? 0 : value}{suffix}</span>
+      </label>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={isNaN(value) ? min : value}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
+        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600"
+      />
+      <input 
+          type="number" 
+          step={step}
+          value={value === 0 ? '' : value} // Allow showing placeholder if 0, or just show empty to allow typing
+          placeholder={value === 0 ? "0" : ""}
+          onChange={(e) => {
+             const val = e.target.value;
+             // If empty, pass 0. If valid number, pass number. 
+             // Note: This prevents "1." state if we strictly force number, but it's a tradeoff for 'removing 0'
+             // To allow "1.", we would need local string state.
+             // For now, let's just make it not force 0 on backspace by checking for empty string
+             onChange(val === '' ? 0 : parseFloat(val));
+          }}
+          className="mt-1 p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-brand-500 outline-none"
+      />
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [mode, setMode] = useState<CalculatorMode>(CalculatorMode.SIP);
   const [inputs, setInputs] = useState<InvestmentInputs>(defaultInputs);
@@ -90,29 +149,14 @@ const App: React.FC = () => {
     }
   }, [mode, inputs]);
 
-  // Input Field Component helper
-  const InputField = ({ label, field, min = 0, max, step = 1, prefix = "", suffix = "" }: { label: string, field: keyof InvestmentInputs, min?: number, max?: number, step?: number, prefix?: string, suffix?: string }) => (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-slate-600 flex justify-between">
-        {label}
-        <span className="text-brand-600 font-semibold">{prefix}{inputs[field]}{suffix}</span>
-      </label>
-      <input
-        type="range"
-        min={min}
-        max={max || (field === 'interestRate' || field === 'stepUpRate' ? 30 : 1000000)}
-        step={step}
-        value={inputs[field] || 0}
-        onChange={(e) => handleInputChange(field, parseFloat(e.target.value))}
-        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600"
+  // Wrapper for InputField to make usage cleaner
+  const InputField = (props: { label: string, field: keyof InvestmentInputs, min?: number, max?: number, step?: number, prefix?: string, suffix?: string }) => (
+      <SmartInputField 
+        {...props} 
+        value={inputs[props.field] || 0}
+        max={props.max || (props.field === 'interestRate' || props.field === 'stepUpRate' ? 30 : 1000000)}
+        onChange={(val) => handleInputChange(props.field, val)}
       />
-      <input 
-          type="number" 
-          value={inputs[field] || 0}
-          onChange={(e) => handleInputChange(field, parseFloat(e.target.value))}
-          className="mt-1 p-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-brand-500 outline-none"
-      />
-    </div>
   );
 
   return (
@@ -127,8 +171,8 @@ const App: React.FC = () => {
                 <Calculator size={24} />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-800 leading-tight">ProVest</h1>
-                <p className="text-xs text-slate-500 font-medium tracking-wide">ADVANCED CALCULATOR</p>
+                <h1 className="text-xl font-bold text-slate-800 leading-tight">Investment Calculator</h1>
+                <p className="text-xs text-slate-500 font-medium tracking-wide">ADVANCED TOOLS</p>
               </div>
             </div>
             
@@ -254,15 +298,17 @@ const App: React.FC = () => {
                     </div>
                 )}
 
-                {/* Advanced Toggles */}
+                {/* Advanced Toggles - Enabled for ROI now */}
                 <div className="bg-slate-50 p-4 rounded-lg space-y-4 border border-slate-200">
                     <div className="flex items-center gap-2 text-slate-700 text-sm font-semibold">
                         <Settings size={14} /> Advanced Settings
                     </div>
-                    {mode !== 'TAX' && mode !== 'ROI' && mode !== 'LOAN' && (
+                    {/* Hiding Inflation for LOAN and TAX only */}
+                    {mode !== 'TAX' && mode !== 'LOAN' && (
                         <InputField label="Inflation Rate (%)" field="inflationRate" max={15} step={0.1} />
                     )}
-                    {(mode !== 'LOAN' && mode !== 'ROI') && (
+                    {/* Hiding Tax Rate for LOAN only */}
+                    {(mode !== 'LOAN') && (
                         <InputField label={mode === 'TAX' ? "Tax Rate (%)" : "Tax on Gains (%)"} field="taxRate" max={40} step={0.5} />
                     )}
                 </div>

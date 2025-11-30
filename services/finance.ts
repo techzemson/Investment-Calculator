@@ -135,12 +135,13 @@ export const calculateInvestment = (mode: CalculatorMode, inputs: InvestmentInpu
        for(let i=1; i<=timePeriodYears; i++) {
            const progress = i/timePeriodYears;
            const currentVal = totalInvested + (capitalGains * progress) + ((totalDividends/timePeriodYears) * i);
+           const inflationFactor = Math.pow(1 + inflationRate / 100, i);
            yearlyData.push({
                year: i,
                invested: totalInvested,
                interest: Math.round(currentVal - totalInvested),
                total: Math.round(currentVal),
-               realValue: Math.round(currentVal) 
+               realValue: Math.round(currentVal / inflationFactor)
            });
        }
        break;
@@ -160,13 +161,14 @@ export const calculateInvestment = (mode: CalculatorMode, inputs: InvestmentInpu
            currentPropValue = currentPropValue * (1 + appRate/100);
            const yearlyNetRent = rIncome - mExpenses; 
            accumulatedNetRent += yearlyNetRent;
+           const inflationFactor = Math.pow(1 + inflationRate / 100, i);
            
            yearlyData.push({
                year: i,
                invested: pPrice,
                interest: Math.round((currentPropValue - pPrice) + accumulatedNetRent),
                total: Math.round(currentPropValue + accumulatedNetRent),
-               realValue: Math.round(currentPropValue)
+               realValue: Math.round((currentPropValue + accumulatedNetRent) / inflationFactor)
            })
        }
        finalValue = currentPropValue + accumulatedNetRent;
@@ -174,8 +176,6 @@ export const calculateInvestment = (mode: CalculatorMode, inputs: InvestmentInpu
 
     case CalculatorMode.ROI:
       // Simple ROI calculation
-      // initialInvestment = Cost
-      // sellPrice = Final Value (Recycled input field)
       totalInvested = initialInvestment;
       finalValue = sellPrice || initialInvestment;
       const profit = finalValue - totalInvested;
@@ -185,34 +185,30 @@ export const calculateInvestment = (mode: CalculatorMode, inputs: InvestmentInpu
       for(let i=1; i<=timePeriodYears; i++) {
         const progress = i/timePeriodYears;
         const currentVal = totalInvested + (profit * progress);
+        const inflationFactor = Math.pow(1 + inflationRate / 100, i);
         yearlyData.push({
             year: i,
             invested: totalInvested,
             interest: Math.round(currentVal - totalInvested),
             total: Math.round(currentVal),
-            realValue: Math.round(currentVal)
+            realValue: Math.round(currentVal / inflationFactor)
         });
       }
       break;
 
     case CalculatorMode.TAX:
-      // Simple Income Tax Mode
-      // totalInvested = Annual Income
-      // finalValue = Net Income
-      // totalInterest = Tax Paid (reusing field)
       totalInvested = annualIncome || 0;
       const taxableIncome = Math.max(0, totalInvested - (deductions || 0));
-      // Simplified progressive tax logic or flat rate for now based on 'taxRate' input
+      // Simplified progressive tax logic placeholder
       const calculatedTax = taxableIncome * (taxRate / 100);
       
       finalValue = totalInvested - calculatedTax;
       
-      // Chart: Just show 1 year breakdown
       yearlyData.push({
           year: 1,
-          invested: totalInvested, // Gross Income
-          interest: calculatedTax, // Tax
-          total: finalValue, // Net Income
+          invested: totalInvested, 
+          interest: calculatedTax,
+          total: finalValue, 
           realValue: finalValue
       });
       break;
@@ -224,10 +220,20 @@ export const calculateInvestment = (mode: CalculatorMode, inputs: InvestmentInpu
       const totalGain = finalValue - totalInvested;
       taxPayable = totalGain > 0 ? totalGain * (taxRate / 100) : 0;
   } else if (mode === CalculatorMode.TAX) {
-      taxPayable = totalInvested - finalValue; // For Tax mode, difference is the tax
+      taxPayable = totalInvested - finalValue;
   }
 
   const postTaxValue = finalValue - (mode === CalculatorMode.TAX ? 0 : taxPayable);
+
+  // CAGR Calculation
+  // CAGR = (End Value / Start Value)^(1/n) - 1
+  // For SIP/Recurring, we use XIRR approximation or just simple growth metric.
+  // Here we will use simple CAGR based on Total Invested vs Final Value for simplicity across modes, 
+  // though for SIP strictly speaking it's not the perfect math (XIRR is better), but decent approximation of "Growth Rate"
+  let cagr = 0;
+  if (totalInvested > 0 && finalValue > 0 && timePeriodYears > 0) {
+      cagr = (Math.pow(finalValue / totalInvested, 1 / timePeriodYears) - 1) * 100;
+  }
 
   return {
     totalInvested: Math.round(totalInvested),
@@ -237,6 +243,8 @@ export const calculateInvestment = (mode: CalculatorMode, inputs: InvestmentInpu
     postTaxValue: Math.round(postTaxValue),
     yearlyData,
     monthlyPayment: Math.round(monthlyPayment),
-    roiPercentage
+    roiPercentage,
+    cagr: isFinite(cagr) ? cagr : 0,
+    durationYears: timePeriodYears
   };
 };

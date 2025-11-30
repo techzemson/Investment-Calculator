@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { CalculationResult, CalculatorMode, AIAnalysis } from '../types';
-import { TrendingUp, DollarSign, PieChart as PieIcon, AlertTriangle, Percent } from 'lucide-react';
+import { TrendingUp, DollarSign, PieChart as PieIcon, AlertTriangle, Percent, Clock, BarChart3 } from 'lucide-react';
 
 interface ResultsProps {
   result: CalculationResult;
@@ -62,6 +62,10 @@ export const Results: React.FC<ResultsProps> = ({ result, mode, aiData, currency
       {/* Header */}
       <div className="flex justify-between items-center no-print">
         <h2 className="text-2xl font-bold text-slate-800">Analysis Result</h2>
+        <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+            <Clock size={14} /> 
+            <span>Duration: <span className="font-semibold text-slate-700">{result.durationYears} Years</span></span>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -99,15 +103,37 @@ export const Results: React.FC<ResultsProps> = ({ result, mode, aiData, currency
           </div>
         </div>
 
-        {/* Card 4 */}
-        {mode !== CalculatorMode.TAX && (
+        {/* Card 4 - Contextual */}
+        {mode === CalculatorMode.TAX && (
+             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
+                <span className="text-slate-500 text-sm font-medium mb-1">Effective Tax Rate</span>
+                <span className="text-2xl font-bold text-slate-700">
+                    {result.totalInvested > 0 ? ((result.taxPayable / result.totalInvested) * 100).toFixed(1) : 0}%
+                </span>
+                <div className="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                    <AlertTriangle size={12} /> Avg rate
+                </div>
+             </div>
+        )}
+
+        {mode !== CalculatorMode.TAX && mode !== CalculatorMode.LOAN && (
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-            <span className="text-slate-500 text-sm font-medium mb-1">Post Tax Value</span>
-            <span className="text-2xl font-bold text-slate-700">{formatCurrency(result.postTaxValue, currency)}</span>
-            <div className="mt-2 text-xs text-slate-400 flex items-center gap-1">
-                <AlertTriangle size={12} /> After deductions
+            <span className="text-slate-500 text-sm font-medium mb-1">CAGR (Growth)</span>
+            <span className="text-2xl font-bold text-purple-600">{result.cagr?.toFixed(2)}%</span>
+            <div className="mt-2 text-xs text-purple-400 flex items-center gap-1">
+                <BarChart3 size={12} /> Annual Avg Growth
             </div>
             </div>
+        )}
+
+        {mode === CalculatorMode.LOAN && (
+             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
+                <span className="text-slate-500 text-sm font-medium mb-1">Total Interest</span>
+                <span className="text-2xl font-bold text-red-500">{formatCurrency(result.totalInterest, currency)}</span>
+                <div className="mt-2 text-xs text-red-400 flex items-center gap-1">
+                    <AlertTriangle size={12} /> Cost of Loan
+                </div>
+             </div>
         )}
       </div>
 
@@ -116,7 +142,10 @@ export const Results: React.FC<ResultsProps> = ({ result, mode, aiData, currency
         {/* Growth Chart - Hide for TAX as it is a single point */}
         {mode !== CalculatorMode.TAX && (
             <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md border border-slate-100">
-                <h3 className="text-lg font-semibold text-slate-800 mb-6">Growth Trajectory</h3>
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-semibold text-slate-800">Growth Trajectory</h3>
+                    <div className="text-xs text-slate-400">Includes Inflation Adj.</div>
+                </div>
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={result.yearlyData}>
@@ -175,6 +204,28 @@ export const Results: React.FC<ResultsProps> = ({ result, mode, aiData, currency
              </div>
         </div>
       </div>
+
+      {/* Additional Stats Strip */}
+      {mode !== CalculatorMode.TAX && mode !== CalculatorMode.LOAN && (
+         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+             <div>
+                 <p className="text-xs text-slate-500 mb-1">Inflation Adjusted Value</p>
+                 <p className="font-semibold text-slate-700">{formatCurrency(result.yearlyData[result.yearlyData.length-1]?.realValue || 0, currency)}</p>
+             </div>
+             <div>
+                 <p className="text-xs text-slate-500 mb-1">Post-Tax Value</p>
+                 <p className="font-semibold text-slate-700">{formatCurrency(result.postTaxValue, currency)}</p>
+             </div>
+             <div>
+                 <p className="text-xs text-slate-500 mb-1">Estimated Tax</p>
+                 <p className="font-semibold text-slate-700">{formatCurrency(result.taxPayable, currency)}</p>
+             </div>
+             <div>
+                 <p className="text-xs text-slate-500 mb-1">Total Gain</p>
+                 <p className="font-semibold text-green-600">{formatCurrency(result.totalInterest, currency)}</p>
+             </div>
+         </div>
+      )}
 
       {/* AI Analysis Section */}
       {aiData && (

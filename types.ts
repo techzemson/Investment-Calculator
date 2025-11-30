@@ -53,6 +53,8 @@ export interface CalculationResult {
   yearlyData: YearData[];
   monthlyPayment?: number; // For Loans
   roiPercentage?: number; // For ROI mode
+  cagr?: number; // Compound Annual Growth Rate
+  durationYears: number;
 }
 
 export interface AIAnalysis {
