@@ -6,7 +6,7 @@ import { Results } from './components/Results';
 import { 
   Calculator, LineChart, Home, DollarSign, TrendingUp, 
   Settings, Loader2, Info, Layers, Percent, FileText,
-  Target, Armchair, Share2, RefreshCw, XCircle
+  Target, Armchair, Share2, RefreshCw, XCircle, BookOpen, Star
 } from 'lucide-react';
 
 // Default Inputs
@@ -37,6 +37,185 @@ const defaultInputs: InvestmentInputs = {
   monthlyExpensesRetirement: 3000
 };
 
+// Documentation Component
+const DocumentationModal = ({ onClose }: { onClose: () => void }) => {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in-up">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+           <div>
+             <h2 className="text-2xl font-bold text-slate-800">User Guide & Documentation</h2>
+             <p className="text-sm text-slate-500">Master your financial planning with Investment Calculator</p>
+           </div>
+           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+             <XCircle size={24} className="text-slate-500" />
+           </button>
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+           {/* Section 1: Introduction */}
+           <section>
+             <h3 className="text-xl font-bold text-brand-600 mb-3 flex items-center gap-2">
+                <Info size={20}/> What is Investment Calculator?
+             </h3>
+             <p className="text-slate-600 leading-relaxed">
+               Investment Calculator is an advanced, AI-powered financial tool designed to help investors, savers, and planners make informed decisions. Whether you are planning for retirement, analyzing a stock, or calculating loan EMIs, this tool provides accurate projections and smart insights.
+             </p>
+           </section>
+
+           {/* Section 2: How to Use */}
+           <section>
+             <h3 className="text-xl font-bold text-brand-600 mb-3 flex items-center gap-2">
+                <Settings size={20}/> How to Use
+             </h3>
+             <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+               <ol className="list-decimal pl-5 space-y-3 text-slate-700">
+                 <li><span className="font-semibold">Select a Calculator:</span> Choose from the sidebar (SIP, Lumpsum, Real Estate, etc.) based on your financial goal.</li>
+                 <li><span className="font-semibold">Configure Inputs:</span> Enter your financial details. Use the sliders for quick adjustments or type directly into the fields for precision.</li>
+                 <li><span className="font-semibold">Advanced Mode:</span> Click the "Advanced Mode" toggle to unlock professional settings like inflation adjustments, tax rates, expense ratios, and annual step-up rates.</li>
+                 <li><span className="font-semibold">Calculate:</span> Hit the blue "Calculate Plan" button to generate your report.</li>
+                 <li><span className="font-semibold">Analyze:</span> Review the interactive charts, read the AI-generated financial advice, and check the year-by-year breakdown table.</li>
+               </ol>
+             </div>
+           </section>
+
+           {/* Section 3: Features & Benefits */}
+           <section>
+              <h3 className="text-xl font-bold text-brand-600 mb-3 flex items-center gap-2">
+                <Star size={20}/> Key Features & Benefits
+              </h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                 <div className="p-4 bg-blue-50/50 rounded-lg border border-blue-100 hover:shadow-sm transition-shadow">
+                    <h4 className="font-bold text-slate-800 mb-1">AI-Powered Insights</h4>
+                    <p className="text-sm text-slate-600">Get personalized text analysis, risk assessments, and actionable tips based on your specific results.</p>
+                 </div>
+                 <div className="p-4 bg-purple-50/50 rounded-lg border border-purple-100 hover:shadow-sm transition-shadow">
+                    <h4 className="font-bold text-slate-800 mb-1">Inflation Adjustment</h4>
+                    <p className="text-sm text-slate-600">Toggle "Show Inflation Adj." in charts to see the "Real Value" (purchasing power) of your future money.</p>
+                 </div>
+                 <div className="p-4 bg-orange-50/50 rounded-lg border border-orange-100 hover:shadow-sm transition-shadow">
+                    <h4 className="font-bold text-slate-800 mb-1">Tax & Expense Handling</h4>
+                    <p className="text-sm text-slate-600">Factor in capital gains tax and expense ratios to see your actual in-hand returns, not just theoretical numbers.</p>
+                 </div>
+                 <div className="p-4 bg-green-50/50 rounded-lg border border-green-100 hover:shadow-sm transition-shadow">
+                    <h4 className="font-bold text-slate-800 mb-1">Comprehensive Reports</h4>
+                    <p className="text-sm text-slate-600">View detailed year-by-year tables, print professional reports, or export raw data to CSV for Excel analysis.</p>
+                 </div>
+              </div>
+           </section>
+
+           {/* Section 4: Calculator Guide */}
+           <section>
+             <h3 className="text-xl font-bold text-brand-600 mb-3 flex items-center gap-2">
+                <Layers size={20}/> Calculator Guide
+             </h3>
+             <div className="space-y-4">
+                {/* SIP */}
+                <div className="flex gap-4 items-start">
+                    <div className="bg-blue-100 p-2 rounded-lg text-blue-600"><TrendingUp size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">SIP / Mutual Fund</h4>
+                        <p className="text-sm text-slate-600">Perfect for monthly investors. Calculate the future value of your Systematic Investment Plans. Use the "Step-Up" feature in Advanced settings to model annual salary hikes (e.g., increasing investment by 10% every year).</p>
+                    </div>
+                </div>
+
+                {/* Lumpsum */}
+                <div className="flex gap-4 items-start">
+                    <div className="bg-green-100 p-2 rounded-lg text-green-600"><DollarSign size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">Lumpsum / Fixed Deposit</h4>
+                        <p className="text-sm text-slate-600">For one-time investments like FDs or Bonds. See how a single deposit grows over years with compound interest.</p>
+                    </div>
+                </div>
+
+                {/* Goal Planner */}
+                <div className="flex gap-4 items-start">
+                    <div className="bg-pink-100 p-2 rounded-lg text-pink-600"><Target size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">Goal Planner</h4>
+                        <p className="text-sm text-slate-600">Reverse engineer your finances. Enter your target amount (e.g., buying a house worth $500k in 10 years), and we calculate exactly how much you need to save monthly to reach it.</p>
+                    </div>
+                </div>
+
+                {/* Retirement */}
+                <div className="flex gap-4 items-start">
+                    <div className="bg-purple-100 p-2 rounded-lg text-purple-600"><Armchair size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">Retirement Planning</h4>
+                        <p className="text-sm text-slate-600">Plan your second innings. Input your current age, retirement age, and current savings to see how large your nest egg will grow and if it beats inflation.</p>
+                    </div>
+                </div>
+
+                {/* Real Estate */}
+                <div className="flex gap-4 items-start">
+                    <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600"><Home size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">Real Estate Analysis</h4>
+                        <p className="text-sm text-slate-600">Evaluate property deals. We factor in property appreciation, monthly rental income, and maintenance expenses to give you the total asset value over time.</p>
+                    </div>
+                </div>
+
+                {/* Stock Market */}
+                <div className="flex gap-4 items-start">
+                    <div className="bg-yellow-100 p-2 rounded-lg text-yellow-600"><LineChart size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">Stock Market</h4>
+                        <p className="text-sm text-slate-600">Analyze individual stock trades. Enter buy price, sell price targets, quantity, and dividend yield to calculate total profit, including capital gains and dividends.</p>
+                    </div>
+                </div>
+
+                {/* Compound Calc */}
+                 <div className="flex gap-4 items-start">
+                    <div className="bg-teal-100 p-2 rounded-lg text-teal-600"><Layers size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">Compound Interest</h4>
+                        <p className="text-sm text-slate-600">Visualize the magic of compounding. Customize the compounding frequency (Monthly, Quarterly, Annually) to see how frequency impacts your final returns.</p>
+                    </div>
+                </div>
+
+                 {/* Loan */}
+                 <div className="flex gap-4 items-start">
+                    <div className="bg-red-100 p-2 rounded-lg text-red-600"><Calculator size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">Loan / EMI</h4>
+                        <p className="text-sm text-slate-600">Calculate your Equated Monthly Installment (EMI). See the split between Principal and Interest for Home Loans, Car Loans, or Personal Loans.</p>
+                    </div>
+                </div>
+
+                 {/* Tax */}
+                 <div className="flex gap-4 items-start">
+                    <div className="bg-slate-100 p-2 rounded-lg text-slate-600"><FileText size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">Income Tax Estimator</h4>
+                        <p className="text-sm text-slate-600">Quick estimate of your tax liability. Enter your annual income and total deductions to see your taxable income and net in-hand salary.</p>
+                    </div>
+                </div>
+
+                 {/* ROI */}
+                 <div className="flex gap-4 items-start">
+                    <div className="bg-orange-100 p-2 rounded-lg text-orange-600"><Percent size={20} /></div>
+                    <div>
+                        <h4 className="font-bold text-slate-800">ROI Calculator</h4>
+                        <p className="text-sm text-slate-600">Simple Return on Investment. Enter your initial investment and final returned amount to get the absolute percentage return and annualized growth.</p>
+                    </div>
+                </div>
+
+             </div>
+           </section>
+        </div>
+        
+        <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+           <button onClick={onClose} className="px-6 py-2 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-colors shadow-lg shadow-brand-200">
+             Start Calculating
+           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Improved Input Field with better Manual Entry Support
 const SmartInputField = ({ 
   label, 
@@ -63,7 +242,6 @@ const SmartInputField = ({
   const [isFocused, setIsFocused] = useState(false);
 
   // Sync prop changes to local state ONLY when not focused.
-  // This prevents the parent value update from interrupting user typing (cursor jumping).
   useEffect(() => {
     if (!isFocused) {
       setLocalValue(value.toString());
@@ -162,6 +340,7 @@ const App: React.FC = () => {
   const [aiData, setAiData] = useState<AIAnalysis | null>(null);
   const [currency, setCurrency] = useState('USD');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showDocs, setShowDocs] = useState(false);
 
   const handleInputChange = (field: keyof InvestmentInputs, value: number) => {
     setInputs(prev => ({ ...prev, [field]: value }));
@@ -234,6 +413,9 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
       
+      {/* Documentation Modal */}
+      {showDocs && <DocumentationModal onClose={() => setShowDocs(false)} />}
+
       {/* Navbar */}
       <nav className="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -248,7 +430,17 @@ const App: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
+               <button 
+                  onClick={() => setShowDocs(true)}
+                  className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
+               >
+                   <BookOpen size={18} />
+                   <span className="hidden md:inline">Documentation</span>
+               </button>
+
+               <div className="h-6 w-px bg-slate-200 mx-1 hidden md:block"></div>
+
                <button onClick={resetInputs} className="p-2 text-slate-400 hover:text-slate-600" title="Reset All">
                    <RefreshCw size={18} />
                </button>
@@ -259,7 +451,7 @@ const App: React.FC = () => {
                <select 
                 value={currency} 
                 onChange={(e) => setCurrency(e.target.value)}
-                className="bg-slate-100 border-none rounded-md text-sm font-medium text-slate-700 py-1 px-3 cursor-pointer hover:bg-slate-200"
+                className="bg-slate-100 border-none rounded-md text-sm font-medium text-slate-700 py-1 px-3 cursor-pointer hover:bg-slate-200 outline-none focus:ring-2 focus:ring-brand-200"
                >
                  <option value="USD">USD ($)</option>
                  <option value="EUR">EUR (€)</option>
