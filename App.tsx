@@ -5,15 +5,17 @@ import { analyzeInvestment } from './services/geminiService';
 import { Results } from './components/Results';
 import { 
   Calculator, LineChart, Home, DollarSign, TrendingUp, 
-  Settings, Loader2, Info
+  Settings, Loader2, Info, Layers, Percent, FileText
 } from 'lucide-react';
 
 // Default Inputs
 const defaultInputs: InvestmentInputs = {
   initialInvestment: 10000,
   monthlyContribution: 500,
+  stepUpRate: 5,
   timePeriodYears: 10,
   interestRate: 8,
+  compoundingFrequency: 1, // Annual
   inflationRate: 3,
   taxRate: 15,
   buyPrice: 100,
@@ -23,7 +25,9 @@ const defaultInputs: InvestmentInputs = {
   propertyPrice: 500000,
   rentalIncome: 2000,
   monthlyExpenses: 500,
-  appreciationRate: 4
+  appreciationRate: 4,
+  annualIncome: 60000,
+  deductions: 5000
 };
 
 const App: React.FC = () => {
@@ -42,9 +46,12 @@ const App: React.FC = () => {
   const navItems = [
     { mode: CalculatorMode.SIP, label: 'SIP / Mutual Fund', icon: TrendingUp },
     { mode: CalculatorMode.LUMPSUM, label: 'Lumpsum / FD', icon: DollarSign },
+    { mode: CalculatorMode.COMPOUND, label: 'Compound Calc', icon: Layers },
     { mode: CalculatorMode.STOCK, label: 'Stock Market', icon: LineChart },
+    { mode: CalculatorMode.ROI, label: 'Return on Investment', icon: Percent },
     { mode: CalculatorMode.PROPERTY, label: 'Real Estate', icon: Home },
     { mode: CalculatorMode.LOAN, label: 'Loans / EMI', icon: Calculator },
+    { mode: CalculatorMode.TAX, label: 'Income Tax', icon: FileText },
   ];
 
   const handleCalculate = useCallback(async () => {
@@ -69,18 +76,9 @@ const App: React.FC = () => {
 
     // Wait for AI (real async)
     try {
-        // We delay slightly to allow progress bar to feel real, then fetch AI
         await new Promise(r => setTimeout(r, 800)); 
-        
-        // Parallel execution: finish progress bar AND fetch AI
         setProgress(100);
-        
-        // Set basic result immediately so user sees charts
         setResult(calcResult); 
-
-        // Fetch AI in background or wait? 
-        // Requirement says "show percentage progress". 
-        // To make it feel advanced, let's wait for AI to complete "analysis"
         const aiResult = await analyzeInvestment(mode, inputs, calcResult);
         setAiData(aiResult);
     } catch (e) {
@@ -102,7 +100,7 @@ const App: React.FC = () => {
       <input
         type="range"
         min={min}
-        max={max || (field === 'interestRate' ? 30 : 1000000)}
+        max={max || (field === 'interestRate' || field === 'stepUpRate' ? 30 : 1000000)}
         step={step}
         value={inputs[field] || 0}
         onChange={(e) => handleInputChange(field, parseFloat(e.target.value))}
@@ -188,13 +186,27 @@ const App: React.FC = () => {
               
               <div className="space-y-6">
                 
-                {/* Dynamic Inputs based on Mode */}
-                {(mode === CalculatorMode.SIP || mode === CalculatorMode.LUMPSUM || mode === CalculatorMode.LOAN) && (
-                   <InputField label="Principal Amount" field="initialInvestment" max={1000000} step={1000} />
+                {/* Dynamic Inputs */}
+                {(mode === CalculatorMode.SIP || mode === CalculatorMode.LUMPSUM || mode === CalculatorMode.LOAN || mode === CalculatorMode.COMPOUND || mode === CalculatorMode.ROI) && (
+                   <InputField label="Investment Amount / Principal" field="initialInvestment" max={1000000} step={1000} />
                 )}
 
                 {(mode === CalculatorMode.SIP) && (
-                   <InputField label="Monthly Contribution" field="monthlyContribution" max={50000} step={100} />
+                   <>
+                    <InputField label="Monthly Contribution" field="monthlyContribution" max={50000} step={100} />
+                    <InputField label="Annual Step-up Rate (%)" field="stepUpRate" max={20} step={1} />
+                   </>
+                )}
+
+                {(mode === CalculatorMode.ROI) && (
+                    <InputField label="Final Returned Amount" field="sellPrice" max={2000000} step={1000} />
+                )}
+
+                {(mode === CalculatorMode.TAX) && (
+                    <>
+                     <InputField label="Annual Income" field="annualIncome" max={2000000} step={1000} />
+                     <InputField label="Deductions" field="deductions" max={500000} step={1000} />
+                    </>
                 )}
 
                 {(mode === CalculatorMode.PROPERTY) && (
@@ -215,21 +227,43 @@ const App: React.FC = () => {
                     </>
                 )}
 
-                <div className="pt-4 border-t border-slate-100 space-y-6">
-                    <InputField label="Time Period (Years)" field="timePeriodYears" max={40} />
-                    {mode !== 'PROPERTY' && mode !== 'STOCK' && (
-                        <InputField label="Interest Rate (%)" field="interestRate" max={25} step={0.1} />
-                    )}
-                </div>
+                {/* Common Time/Rate */}
+                {mode !== CalculatorMode.TAX && (
+                    <div className="pt-4 border-t border-slate-100 space-y-6">
+                        <InputField label="Time Period (Years)" field="timePeriodYears" max={40} />
+                        
+                        {mode !== 'PROPERTY' && mode !== 'STOCK' && mode !== 'ROI' && (
+                            <InputField label="Interest Rate (%)" field="interestRate" max={25} step={0.1} />
+                        )}
+
+                        {(mode === CalculatorMode.COMPOUND) && (
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm font-medium text-slate-600">Compounding Frequency</label>
+                                <select 
+                                    value={inputs.compoundingFrequency}
+                                    onChange={(e) => handleInputChange('compoundingFrequency', parseInt(e.target.value))}
+                                    className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-brand-500 outline-none"
+                                >
+                                    <option value={1}>Annually (1x/yr)</option>
+                                    <option value={2}>Semi-Annually (2x/yr)</option>
+                                    <option value={4}>Quarterly (4x/yr)</option>
+                                    <option value={12}>Monthly (12x/yr)</option>
+                                </select>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Advanced Toggles */}
                 <div className="bg-slate-50 p-4 rounded-lg space-y-4 border border-slate-200">
                     <div className="flex items-center gap-2 text-slate-700 text-sm font-semibold">
                         <Settings size={14} /> Advanced Settings
                     </div>
-                    <InputField label="Inflation Rate (%)" field="inflationRate" max={15} step={0.1} />
-                    {mode !== 'LOAN' && (
-                        <InputField label="Tax Rate on Gains (%)" field="taxRate" max={40} step={0.5} />
+                    {mode !== 'TAX' && mode !== 'ROI' && mode !== 'LOAN' && (
+                        <InputField label="Inflation Rate (%)" field="inflationRate" max={15} step={0.1} />
+                    )}
+                    {(mode !== 'LOAN' && mode !== 'ROI') && (
+                        <InputField label={mode === 'TAX' ? "Tax Rate (%)" : "Tax on Gains (%)"} field="taxRate" max={40} step={0.5} />
                     )}
                 </div>
               </div>

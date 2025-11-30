@@ -4,7 +4,7 @@ import {
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { CalculationResult, CalculatorMode, AIAnalysis } from '../types';
-import { Download, TrendingUp, DollarSign, PieChart as PieIcon, AlertTriangle } from 'lucide-react';
+import { TrendingUp, DollarSign, PieChart as PieIcon, AlertTriangle, Percent } from 'lucide-react';
 
 interface ResultsProps {
   result: CalculationResult;
@@ -30,115 +30,130 @@ export const Results: React.FC<ResultsProps> = ({ result, mode, aiData, currency
     { name: 'Gains', value: result.totalInterest > 0 ? result.totalInterest : 0 },
   ];
 
-  if(mode === CalculatorMode.LOAN) {
+  if (mode === CalculatorMode.LOAN) {
       pieData[0] = { name: 'Principal', value: result.totalInvested };
       pieData[1] = { name: 'Interest', value: result.totalInterest };
+  } else if (mode === CalculatorMode.TAX) {
+      pieData[0] = { name: 'Net Income', value: result.finalValue };
+      pieData[1] = { name: 'Tax', value: result.taxPayable };
   }
 
-  const handlePrint = () => {
-    window.print();
+  const getLabel1 = () => {
+      if (mode === CalculatorMode.LOAN) return 'Total Principal';
+      if (mode === CalculatorMode.TAX) return 'Gross Income';
+      return 'Total Investment';
+  };
+
+  const getLabel2 = () => {
+      if (mode === CalculatorMode.LOAN) return 'Total Payable';
+      if (mode === CalculatorMode.TAX) return 'Net Income';
+      return 'Future Value';
+  };
+
+  const getLabel3 = () => {
+      if (mode === CalculatorMode.LOAN) return 'Monthly EMI';
+      if (mode === CalculatorMode.TAX) return 'Tax Payable';
+      if (mode === CalculatorMode.ROI) return 'Absolute ROI';
+      return 'Est. Returns';
   };
 
   return (
     <div className="space-y-8 animate-fade-in-up">
-      {/* Header Actions */}
+      {/* Header */}
       <div className="flex justify-between items-center no-print">
         <h2 className="text-2xl font-bold text-slate-800">Analysis Result</h2>
-        <button 
-          onClick={handlePrint}
-          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg"
-        >
-          <Download size={18} />
-          <span>Download PDF</span>
-        </button>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1 */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-          <span className="text-slate-500 text-sm font-medium mb-1">Total {mode === 'LOAN' ? 'Principal' : 'Investment'}</span>
+          <span className="text-slate-500 text-sm font-medium mb-1">{getLabel1()}</span>
           <span className="text-2xl font-bold text-slate-900">{formatCurrency(result.totalInvested, currency)}</span>
           <div className="mt-2 text-xs text-slate-400 flex items-center gap-1">
-             <DollarSign size={12} /> Principal amount
+             <DollarSign size={12} /> {mode === 'TAX' ? 'Pre-tax amount' : 'Initial Amount'}
           </div>
         </div>
         
+        {/* Card 2 */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-          <span className="text-slate-500 text-sm font-medium mb-1">{mode === 'LOAN' ? 'Total Payable' : 'Future Value'}</span>
+          <span className="text-slate-500 text-sm font-medium mb-1">{getLabel2()}</span>
           <span className="text-2xl font-bold text-brand-600">{formatCurrency(result.finalValue, currency)}</span>
            <div className="mt-2 text-xs text-brand-400 flex items-center gap-1">
-             <TrendingUp size={12} /> Includes growth
+             <TrendingUp size={12} /> {mode === 'TAX' ? 'Take home' : 'Final Amount'}
           </div>
         </div>
 
-        {mode === 'LOAN' ? (
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-             <span className="text-slate-500 text-sm font-medium mb-1">Monthly EMI</span>
-             <span className="text-2xl font-bold text-orange-500">{formatCurrency(result.monthlyPayment || 0, currency)}</span>
-              <div className="mt-2 text-xs text-orange-400 flex items-center gap-1">
-                <PieIcon size={12} /> Monthly outflow
-             </div>
-           </div>
-        ) : (
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-            <span className="text-slate-500 text-sm font-medium mb-1">Est. Returns</span>
-            <span className="text-2xl font-bold text-green-500">{formatCurrency(result.totalInterest, currency)}</span>
-             <div className="mt-2 text-xs text-green-400 flex items-center gap-1">
-               <TrendingUp size={12} /> Absolute Profit
-            </div>
-          </div>
-        )}
-
+        {/* Card 3 */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
-          <span className="text-slate-500 text-sm font-medium mb-1">Post Tax Value</span>
-          <span className="text-2xl font-bold text-slate-700">{formatCurrency(result.postTaxValue, currency)}</span>
-           <div className="mt-2 text-xs text-slate-400 flex items-center gap-1">
-             <AlertTriangle size={12} /> After deductions
+          <span className="text-slate-500 text-sm font-medium mb-1">{getLabel3()}</span>
+          <span className={`text-2xl font-bold ${mode === 'LOAN' || mode === 'TAX' ? 'text-orange-500' : 'text-green-500'}`}>
+            {mode === CalculatorMode.ROI 
+                ? `${result.roiPercentage?.toFixed(2)}%`
+                : formatCurrency(mode === CalculatorMode.LOAN ? (result.monthlyPayment || 0) : mode === CalculatorMode.TAX ? result.taxPayable : result.totalInterest, currency)
+            }
+          </span>
+           <div className={`mt-2 text-xs ${mode === 'LOAN' || mode === 'TAX' ? 'text-orange-400' : 'text-green-400'} flex items-center gap-1`}>
+             {mode === CalculatorMode.ROI ? <Percent size={12} /> : mode === 'LOAN' ? <PieIcon size={12} /> : <TrendingUp size={12} />}
+             {mode === 'LOAN' ? 'Monthly outflow' : mode === 'TAX' ? 'Deduction' : 'Profit/Gain'}
           </div>
         </div>
+
+        {/* Card 4 */}
+        {mode !== CalculatorMode.TAX && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col">
+            <span className="text-slate-500 text-sm font-medium mb-1">Post Tax Value</span>
+            <span className="text-2xl font-bold text-slate-700">{formatCurrency(result.postTaxValue, currency)}</span>
+            <div className="mt-2 text-xs text-slate-400 flex items-center gap-1">
+                <AlertTriangle size={12} /> After deductions
+            </div>
+            </div>
+        )}
       </div>
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print-break-inside-avoid">
-        {/* Growth Chart */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md border border-slate-100">
-            <h3 className="text-lg font-semibold text-slate-800 mb-6">Growth Trajectory</h3>
-            <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={result.yearlyData}>
-                        <defs>
-                            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                            </linearGradient>
-                            <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="#94a3b8" stopOpacity={0}/>
-                            </linearGradient>
-                        </defs>
-                        <XAxis dataKey="year" stroke="#94a3b8" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
-                        <YAxis 
-                            stroke="#94a3b8" 
-                            tick={{fontSize: 12}} 
-                            tickLine={false} 
-                            axisLine={false}
-                            tickFormatter={(value) => `${(value/1000).toFixed(0)}k`} 
-                        />
-                        <RechartsTooltip 
-                            contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                            formatter={(value: number) => formatCurrency(value, currency)}
-                        />
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <Area type="monotone" dataKey="total" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTotal)" name="Total Value" />
-                        <Area type="monotone" dataKey="invested" stroke="#94a3b8" fillOpacity={1} fill="url(#colorInvested)" name={mode === 'LOAN' ? 'Principal Paid' : 'Invested Amount'} />
-                    </AreaChart>
-                </ResponsiveContainer>
+        {/* Growth Chart - Hide for TAX as it is a single point */}
+        {mode !== CalculatorMode.TAX && (
+            <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-md border border-slate-100">
+                <h3 className="text-lg font-semibold text-slate-800 mb-6">Growth Trajectory</h3>
+                <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={result.yearlyData}>
+                            <defs>
+                                <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                                </linearGradient>
+                                <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor="#94a3b8" stopOpacity={0}/>
+                                </linearGradient>
+                            </defs>
+                            <XAxis dataKey="year" stroke="#94a3b8" tick={{fontSize: 12}} tickLine={false} axisLine={false} />
+                            <YAxis 
+                                stroke="#94a3b8" 
+                                tick={{fontSize: 12}} 
+                                tickLine={false} 
+                                axisLine={false}
+                                tickFormatter={(value) => `${(value/1000).toFixed(0)}k`} 
+                            />
+                            <RechartsTooltip 
+                                contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                                formatter={(value: number) => formatCurrency(value, currency)}
+                            />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <Area type="monotone" dataKey="total" stroke="#3b82f6" fillOpacity={1} fill="url(#colorTotal)" name="Total Value" />
+                            <Area type="monotone" dataKey="invested" stroke="#94a3b8" fillOpacity={1} fill="url(#colorInvested)" name={mode === 'LOAN' ? 'Principal Paid' : 'Invested Amount'} />
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
-        </div>
+        )}
 
         {/* Ratio Chart */}
-        <div className="bg-white p-6 rounded-xl shadow-md border border-slate-100">
-             <h3 className="text-lg font-semibold text-slate-800 mb-6">Distribution</h3>
+        <div className={`${mode === CalculatorMode.TAX ? 'lg:col-span-3' : ''} bg-white p-6 rounded-xl shadow-md border border-slate-100`}>
+             <h3 className="text-lg font-semibold text-slate-800 mb-6">{mode === 'TAX' ? 'Tax Breakdown' : 'Distribution'}</h3>
              <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
