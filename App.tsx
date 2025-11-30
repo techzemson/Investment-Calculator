@@ -59,78 +59,95 @@ const SmartInputField = ({
   suffix?: string,
   tooltip?: string
 }) => {
-  const [inputValue, setInputValue] = useState<string>(value.toString());
+  const [localValue, setLocalValue] = useState(value.toString());
+  const [isFocused, setIsFocused] = useState(false);
 
-  // Sync external value changes if they differ significantly (e.g. presets)
+  // Sync prop changes to local state ONLY when not focused.
+  // This prevents the parent value update from interrupting user typing (cursor jumping).
   useEffect(() => {
-    if (parseFloat(inputValue) !== value) {
-      setInputValue(value.toString());
+    if (!isFocused) {
+      setLocalValue(value.toString());
     }
-  }, [value]);
+  }, [value, isFocused]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value;
-    setInputValue(rawVal);
+    setLocalValue(rawVal);
     
-    // Only propagate valid numbers
-    if (rawVal !== '' && !isNaN(parseFloat(rawVal))) {
-      onChange(parseFloat(rawVal));
-    } else if (rawVal === '') {
-      onChange(0); // Treat empty as 0 for calculation safety, but keep visual empty
+    // Allow empty string for clearing input, pass 0 to parent
+    if (rawVal === '') {
+      onChange(0);
+      return;
+    }
+    
+    const parsed = parseFloat(rawVal);
+    if (!isNaN(parsed)) {
+      onChange(parsed);
     }
   };
 
   const handleBlur = () => {
-    if (inputValue === '' || isNaN(parseFloat(inputValue))) {
-      setInputValue('0');
-      onChange(0);
+    setIsFocused(false);
+    // If invalid or empty on blur, revert to the valid prop value
+    if (localValue === '' || isNaN(parseFloat(localValue))) {
+      setLocalValue(value.toString());
     }
   };
 
+  const percentage = max ? ((Math.min(Math.max(value, min), max) - min) / (max - min)) * 100 : 0;
+
   return (
-    <div className="flex flex-col gap-2 group">
+    <div className="flex flex-col gap-3 group bg-white p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors shadow-sm">
       <div className="flex justify-between items-center">
-        <label className="text-sm font-medium text-slate-600 flex items-center gap-1 cursor-help" title={tooltip}>
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1 cursor-help" title={tooltip}>
           {label}
           {tooltip && <Info size={12} className="text-slate-400" />}
         </label>
-        {/* Optional Reset for individual field */}
         {value !== 0 && (
-            <button onClick={() => {onChange(0); setInputValue('0');}} className="text-xs text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                Clear
+            <button 
+                onClick={() => {onChange(0); setLocalValue('0');}} 
+                className="text-[10px] uppercase font-bold text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+            >
+                Reset
             </button>
         )}
       </div>
       
       <div className="relative">
-          {prefix && <span className="absolute left-3 top-2.5 text-slate-400 text-sm">{prefix}</span>}
+          {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg font-medium pointer-events-none">{prefix}</span>}
           <input 
               type="number"
-              value={inputValue === '0' && document.activeElement !== document.getElementById(`input-${label}`) ? '0' : inputValue} 
-              id={`input-${label}`}
+              value={localValue} 
               onChange={handleChange}
+              onFocus={() => setIsFocused(true)}
               onBlur={handleBlur}
               step={step}
-              className={`w-full p-2 ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-8' : ''} text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all`}
+              className={`w-full py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all font-bold text-slate-800 text-lg
+                ${prefix ? 'pl-8' : 'pl-3'} ${suffix ? 'pr-12' : 'pr-3'}
+              `}
           />
-          {suffix && <span className="absolute right-3 top-2.5 text-slate-400 text-sm">{suffix}</span>}
+          {suffix && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium pointer-events-none">{suffix}</span>}
       </div>
       
-      {/* Slider for quick adjustments */}
       {max && (
-        <input
-            type="range"
-            min={min}
-            max={max}
-            step={step}
-            value={value || 0}
-            onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                setInputValue(v.toString());
-                onChange(v);
-            }}
-            className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-500 opacity-50 hover:opacity-100 transition-opacity"
-        />
+        <div className="relative w-full h-4 flex items-center mt-1">
+             <input
+                type="range"
+                min={min}
+                max={max}
+                step={step}
+                value={value || 0}
+                onChange={(e) => {
+                    const v = parseFloat(e.target.value);
+                    setLocalValue(v.toString());
+                    onChange(v);
+                }}
+                style={{
+                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${percentage}%, #e2e8f0 ${percentage}%, #e2e8f0 100%)`
+                }}
+                className="w-full h-1.5 rounded-lg appearance-none cursor-pointer bg-slate-200 focus:outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-brand-500 hover:[&::-webkit-slider-thumb]:scale-110 transition-all"
+            />
+        </div>
       )}
     </div>
   );
@@ -297,7 +314,7 @@ const App: React.FC = () => {
                   </button>
               </div>
               
-              <div className="space-y-5">
+              <div className="space-y-4">
                 
                 {/* Mode Specific Inputs */}
 
@@ -366,7 +383,7 @@ const App: React.FC = () => {
 
                 {/* --- COMMON DURATION & RATE --- */}
                 {mode !== CalculatorMode.TAX && mode !== CalculatorMode.RETIREMENT && (
-                    <div className="pt-4 border-t border-slate-100 space-y-5">
+                    <div className="pt-4 border-t border-slate-100 space-y-4">
                         <InputField label="Duration (Years)" field="timePeriodYears" max={50} suffix="yrs" />
                         
                         {mode !== 'PROPERTY' && mode !== 'STOCK' && mode !== 'ROI' && (
