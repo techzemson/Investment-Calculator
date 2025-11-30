@@ -28,7 +28,6 @@ const formatCurrency = (val: number, curr: string) => {
 
 export const Results: React.FC<ResultsProps> = ({ result, mode, aiData, currency }) => {
   const [showRealValue, setShowRealValue] = useState(false);
-  const [showTable, setShowTable] = useState(false);
 
   const pieData = [
     { name: 'Invested', value: result.totalInvested },
@@ -265,46 +264,39 @@ export const Results: React.FC<ResultsProps> = ({ result, mode, aiData, currency
         </div>
       </div>
 
-      {/* Table Toggle */}
-      <div className="no-print">
-          <button 
-            onClick={() => setShowTable(!showTable)}
-            className="w-full py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-medium rounded-xl flex items-center justify-center gap-2 transition-all"
-          >
-              <Table size={18} />
-              {showTable ? 'Hide Yearly Breakdown' : 'Show Yearly Breakdown Table'}
-          </button>
-      </div>
-
-      {/* Detailed Table */}
-      {showTable && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-fade-in-up">
-              <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                      <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-                          <tr>
-                              <th className="px-6 py-4">Year</th>
-                              <th className="px-6 py-4">Calendar</th>
-                              <th className="px-6 py-4 text-right">Invested</th>
-                              <th className="px-6 py-4 text-right">Interest/Gain</th>
-                              <th className="px-6 py-4 text-right text-brand-600">Total Value</th>
-                          </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                          {result.yearlyData.map((row) => (
-                              <tr key={row.year} className="hover:bg-slate-50/50 transition-colors">
-                                  <td className="px-6 py-3 font-medium text-slate-500">{row.year}</td>
-                                  <td className="px-6 py-3 text-slate-500">{row.label}</td>
-                                  <td className="px-6 py-3 text-right text-slate-700">{formatCurrency(row.invested, currency)}</td>
-                                  <td className="px-6 py-3 text-right text-green-600">+{formatCurrency(row.interest, currency)}</td>
-                                  <td className="px-6 py-3 text-right font-bold text-slate-800">{formatCurrency(row.total, currency)}</td>
-                              </tr>
-                          ))}
-                      </tbody>
-                  </table>
+      {/* Detailed Table (Always Visible) */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-fade-in-up">
+          <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                  <Table size={18} className="text-brand-600" />
+                  <h3 className="font-semibold text-slate-700">Yearly Breakdown</h3>
               </div>
           </div>
-      )}
+          <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+              <table className="w-full text-sm text-left relative">
+                  <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+                      <tr>
+                          <th className="px-6 py-4">Year</th>
+                          <th className="px-6 py-4">Calendar</th>
+                          <th className="px-6 py-4 text-right">Invested</th>
+                          <th className="px-6 py-4 text-right">Interest/Gain</th>
+                          <th className="px-6 py-4 text-right text-brand-600">Total Value</th>
+                      </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                      {result.yearlyData.map((row) => (
+                          <tr key={row.year} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-3 font-medium text-slate-500">{row.year}</td>
+                              <td className="px-6 py-3 text-slate-500">{row.label}</td>
+                              <td className="px-6 py-3 text-right text-slate-700">{formatCurrency(row.invested, currency)}</td>
+                              <td className="px-6 py-3 text-right text-green-600">+{formatCurrency(row.interest, currency)}</td>
+                              <td className="px-6 py-3 text-right font-bold text-slate-800">{formatCurrency(row.total, currency)}</td>
+                          </tr>
+                      ))}
+                  </tbody>
+              </table>
+          </div>
+      </div>
 
       {/* Additional Stats Strip */}
       {mode !== CalculatorMode.TAX && mode !== CalculatorMode.LOAN && (

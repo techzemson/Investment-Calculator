@@ -284,19 +284,24 @@ const App: React.FC = () => {
                <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
                  <h2 className="font-semibold text-slate-700">Select Calculator</h2>
                </div>
-               <div className="p-2 grid grid-cols-2 gap-1 max-h-[300px] overflow-y-auto">
+               <div className="p-3 grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar">
                  {navItems.map((item) => (
                    <button
                      key={item.mode}
                      onClick={() => { setMode(item.mode); setResult(null); }}
-                     className={`flex flex-col items-center justify-center gap-2 px-2 py-4 rounded-lg text-xs font-medium transition-all text-center ${
-                       mode === item.mode 
-                       ? 'bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-200' 
-                       : 'text-slate-500 hover:bg-slate-50'
+                     className={`flex flex-col items-center justify-center gap-2 px-2 py-5 rounded-xl text-xs font-bold transition-all text-center border relative overflow-hidden group
+                       ${mode === item.mode 
+                       ? 'bg-brand-600 text-white border-brand-700 shadow-md transform scale-[1.02]' 
+                       : 'bg-white text-slate-500 border-slate-100 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600'
                      }`}
                    >
-                     <item.icon size={20} className={mode === item.mode ? 'text-brand-600' : 'text-slate-400'}/>
-                     {item.label}
+                     {/* Decorative background circle for selected state */}
+                     {mode === item.mode && (
+                        <div className="absolute -top-6 -right-6 w-16 h-16 bg-white opacity-10 rounded-full blur-xl"></div>
+                     )}
+                     
+                     <item.icon size={24} className={`mb-1 transition-transform group-hover:scale-110 ${mode === item.mode ? 'text-white' : ''}`}/>
+                     <span className="z-10">{item.label}</span>
                    </button>
                  ))}
                </div>
