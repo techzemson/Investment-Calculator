@@ -1,27 +1,31 @@
 export enum CalculatorMode {
-  SIP = 'SIP',
+  SIP = 'SIP', // Also handles Lumpsum + SIP
   LUMPSUM = 'LUMPSUM',
   STOCK = 'STOCK',
   PROPERTY = 'PROPERTY',
   LOAN = 'LOAN',
   COMPOUND = 'COMPOUND',
   ROI = 'ROI',
-  TAX = 'TAX'
+  TAX = 'TAX',
+  GOAL = 'GOAL',
+  RETIREMENT = 'RETIREMENT'
 }
 
 export interface InvestmentInputs {
   initialInvestment: number;
   monthlyContribution: number;
-  stepUpRate?: number; // Annual % increase in SIP contribution
+  stepUpRate?: number; 
   timePeriodYears: number;
   interestRate: number;
-  compoundingFrequency?: number; // 1 = Annual, 2 = Semi-Annual, 4 = Quarterly, 12 = Monthly
-  inflationRate: number; // For real return calculation
-  taxRate: number; // For tax liability
-  
+  compoundingFrequency?: number; 
+  inflationRate: number; 
+  taxRate: number; 
+  expenseRatio?: number; // New: Expense Ratio for funds
+  startYear?: number; // New: For Table display
+
   // Stock / ROI Specific
   buyPrice?: number;
-  sellPrice?: number; // Used as Final Value for ROI
+  sellPrice?: number; 
   quantity?: number;
   dividendYield?: number;
 
@@ -34,14 +38,23 @@ export interface InvestmentInputs {
   // Tax Specific
   annualIncome?: number;
   deductions?: number;
+
+  // Goal Specific
+  targetAmount?: number;
+
+  // Retirement Specific
+  currentAge?: number;
+  retirementAge?: number;
+  monthlyExpensesRetirement?: number; // Desired monthly income
 }
 
 export interface YearData {
   year: number;
+  label: number; // Actual Calendar Year
   invested: number;
   interest: number;
   total: number;
-  realValue: number; // Inflation adjusted
+  realValue: number; 
 }
 
 export interface CalculationResult {
@@ -51,10 +64,13 @@ export interface CalculationResult {
   taxPayable: number;
   postTaxValue: number;
   yearlyData: YearData[];
-  monthlyPayment?: number; // For Loans
-  roiPercentage?: number; // For ROI mode
-  cagr?: number; // Compound Annual Growth Rate
+  monthlyPayment?: number; // Loans or Goal Requirement
+  roiPercentage?: number; 
+  cagr?: number; 
   durationYears: number;
+  doublingTime?: number; // Rule of 72
+  breakEvenPoint?: number;
+  purchasingPowerLoss?: number;
 }
 
 export interface AIAnalysis {
